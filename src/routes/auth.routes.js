@@ -1,0 +1,46 @@
+import express from "express";
+import passport from "passport";
+import jwt from "jsonwebtoken";
+import { login } from "../controllers/auth.controller.js";
+
+const router = express.Router();
+
+router.post("/login", login);
+
+router.get(
+    "/google",
+    passport.authenticate("google", { scope: ["email", "profile"] })
+);
+
+router.get(
+    "/google/callback",
+    passport.authenticate("google", { session: false }),
+    (req, res) => {
+        console.log("✅ User authenticated:", req.user.email, "Role:", req.user.role);
+        const token = jwt.sign(
+            { id: req.user._id, role: req.user.role },
+            process.env.JWT_SECRET
+        );
+        res.json({ token });
+    }
+);
+
+router.get(
+    "/facebook",
+    passport.authenticate("facebook", { scope: ["email"] })
+);
+
+router.get(
+    "/facebook/callback",
+    passport.authenticate("facebook", { session: false }),
+    (req, res) => {
+        console.log("✅ User authenticated via Facebook:", req.user.email, "Role:", req.user.role);
+        const token = jwt.sign(
+            { id: req.user._id, role: req.user.role },
+            process.env.JWT_SECRET
+        );
+        res.json({ token });
+    }
+);
+
+export default router;
