@@ -46,10 +46,11 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       async (_, __, profile, done) => {
         console.log("🔵 Facebook Profile:", profile.name, profile.emails ? profile.emails[0].value : "No Email");
 
-        const email = profile.emails ? profile.emails[0].value : null;
+        let email = profile.emails ? profile.emails[0].value : null;
 
         if (!email) {
-          return done(new Error("Facebook account has no email"), false);
+          console.warn("⚠️ No email found, using Facebook ID as placeholder.");
+          email = `${profile.id}@facebook.com`;
         }
 
         let user = await User.findOne({ email });
