@@ -14,7 +14,7 @@ const agencySchema = new mongoose.Schema({
     // Ville où se situe l'agence
     city: {
         type: String,
-        required: [true, 'La ville de l\'agence est obligatoire.'],
+        required: [true, 'La vilgit de l\'agence est obligatoire.'],
         trim: true
     },
     // Statut de l'agence pour contrôler son activité
