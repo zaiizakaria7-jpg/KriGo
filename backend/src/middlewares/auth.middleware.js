@@ -1,18 +1,37 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
-const isAuth = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header) return res.sendStatus(401);
+/**
+ * Middleware d'authentification JWT.
+ * - Vérifie le header Authorization: "Bearer <token>"
+ * - Si valide, attache { id, role } à req.user
+ * - Si manquant ou invalide, répond 401 Unauthorized
+ */
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization || '';
 
-  const token = header.split(" ")[1];
-  if (!token) return res.sendStatus(401);
+  // Vérifie le schéma Bearer
+  if (!authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Non autorisé: token manquant.' });
+  }
+
+  const token = authHeader.split(' ')[1];
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch {
-    res.sendStatus(403);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Supporte "role" et "rôle" pour compatibilité
+    const role = decoded.role ?? decoded.rôle;
+    req.user = { id: decoded.id, role, rôle: role };
+
+    return next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Non autorisé: token invalide.' });
   }
 };
 
-module.exports = { isAuth };
+// Exports compatibles avec le code existant
+module.exports = {
+  authMiddleware,
+  isAuth: authMiddleware,
+  protect: authMiddleware
+};
