@@ -4,35 +4,39 @@ const jwt = require("jsonwebtoken");
 
 exports.register = async (req, res) => {
 
-    try {
-        const { nom, prenom, email, CIN, city, address, phone, password } = req.body;
+  try {
+    const { nom, prenom, email, CIN, city, address, phone, password } = req.body;
 
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: "Email deja utilisé" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await User.create({
-            nom,
-            prenom,
-            email,
-            CIN,
-            city,
-            address,
-            phone,
-            password: hashedPassword
-        });
-
-        res.status(201).json({
-            message: "Compte créé avec succès",
-            user: { id: user._id, email: user.email, role: user.role }
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    if (!email || !password || !nom || !prenom) {
+      return res.status(400).json({ message: "Tous les champs obligatoires (nom, prenom, email, password) doivent être remplis." });
     }
+
+    const userExist = await User.findOne({ email });
+    if (userExist) {
+      return res.status(400).json({ message: "Email deja utilisé" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      nom,
+      prenom,
+      email,
+      CIN,
+      city,
+      address,
+      phone,
+      password: hashedPassword
+    });
+
+    res.status(201).json({
+      message: "Compte créé avec succès",
+      user: { id: user._id, email: user.email, role: user.role }
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 
