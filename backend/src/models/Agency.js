@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const agencySchema = new mongoose.Schema({
   name: String,
@@ -6,4 +6,4 @@ const agencySchema = new mongoose.Schema({
   phone: String
 });
 
-module.exports = mongoose.model("Agency", agencySchema);
+export default mongoose.model("Agency", agencySchema);

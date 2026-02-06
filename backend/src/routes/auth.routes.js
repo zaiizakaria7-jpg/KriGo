@@ -1,8 +1,11 @@
-const express = require("express");
-const passport = require("passport");
-const jwt = require("jsonwebtoken");
+import express from "express";
+import passport from "passport";
+import jwt from "jsonwebtoken";
+import { login } from "../controllers/auth.controller.js";
 
 const router = express.Router();
+
+router.post("/login", login);
 
 router.get(
     "/google",
@@ -40,4 +43,4 @@ router.get(
     }
 );
 
-module.exports = router;
+export default router;

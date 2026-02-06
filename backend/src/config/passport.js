@@ -1,7 +1,7 @@
-const passport = require("passport");
-const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
-const { Strategy: FacebookStrategy } = require("passport-facebook");
-const User = require("../models/user");
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as FacebookStrategy } from "passport-facebook";
+import User from "../models/User.js";
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -71,5 +71,3 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
     )
   );
 }
-
-module.exports = passport;

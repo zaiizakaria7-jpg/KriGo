@@ -1,24 +1,20 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  nom: String,
-  prenom: String,
-  CIN: String,
-  city: String,
-  address: String,
-  phone: String,
-  email: { type: String, unique: true },
+  email: String,
   password: String,
   role: {
     type: String,
-    enum: ["user", "agency_admin", "super_admin"],
     default: "user"
   },
-  date_naissance: Date,
+  agency: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Agency"
+  },
   provider: {
     type: String,
     default: "local"
   }
-}, { timestamps: true });
+});
 
-module.exports = mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema);
