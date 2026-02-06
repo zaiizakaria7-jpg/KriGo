@@ -7,11 +7,14 @@ exports.register = async (req, res) => {
   try {
     const { nom, prenom, email, CIN, city, address, phone, password } = req.body;
 
+    if (!email || !password || !nom || !prenom) {
+      return res.status(400).json({ message: "Tous les champs obligatoires (nom, prenom, email, password) doivent être remplis." });
+    }
+
     const userExist = await User.findOne({ email });
     if (userExist) {
       return res.status(400).json({ message: "Email deja utilisé" });
     }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
