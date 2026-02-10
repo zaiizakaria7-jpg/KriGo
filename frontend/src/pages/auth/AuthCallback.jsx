@@ -5,7 +5,7 @@ import { useUserAuth } from "@/lib/user-auth-context";
 export default function AuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { setUser } = useUserAuth();
+    const { refreshUser } = useUserAuth();
 
     useEffect(() => {
         const token = searchParams.get("token");
@@ -15,7 +15,7 @@ export default function AuthCallback() {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
 
-                // Save token and user info
+                // Save token info
                 const user = {
                     id: payload.id,
                     role: payload.role,
@@ -25,10 +25,9 @@ export default function AuthCallback() {
                 };
 
                 localStorage.setItem("krigo_token", token);
-                localStorage.setItem("krigo_user", JSON.stringify(user));
 
-                // Update context
-                setUser(user);
+                // Update context and storage via refreshUser
+                refreshUser(user);
 
                 // Redirect to home
                 navigate("/");
@@ -39,7 +38,7 @@ export default function AuthCallback() {
         } else {
             navigate("/auth/login");
         }
-    }, [searchParams, navigate, setUser]);
+    }, [searchParams, navigate, refreshUser]);
 
     return (
         <div className="flex min-h-screen items-center justify-center">
