@@ -30,7 +30,18 @@ const vehicleSchema = new mongoose.Schema({
     image: {
         type: String
     },
-    description: String
+    images: {
+        type: [String],
+        default: []
+    },
+    description: String,
+    specs: {
+        seats: Number,
+        fuel: String,
+        transmission: String,
+        topSpeed: String,
+        range: String
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Vehicle", vehicleSchema);

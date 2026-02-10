@@ -27,6 +27,19 @@ const reservationSchema = new mongoose.Schema({
     totalPrice: {
         type: Number,
         required: true
+    },
+    cin: {
+        type: String,
+        required: true
+    },
+    phone: {
+        type: String,
+        required: true
+    },
+    options: {
+        gps: { type: Boolean, default: false },
+        extraDriver: { type: Boolean, default: false },
+        insurance: { type: String, enum: ["basic", "premium", "none"], default: "none" }
     }
 }, { timestamps: true });
 

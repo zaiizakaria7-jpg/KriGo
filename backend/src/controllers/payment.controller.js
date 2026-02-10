@@ -275,7 +275,11 @@ exports.confirmCashPayment = async (req, res) => {
     try {
         const { paymentId } = req.params;
 
-        const payment = await Payment.findById(paymentId);
+        const payment = await Payment.findById(paymentId).populate({
+            path: 'reservation',
+            populate: { path: 'vehicle' }
+        });
+
         if (!payment) {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
@@ -284,13 +288,23 @@ exports.confirmCashPayment = async (req, res) => {
             return res.status(400).json({ success: false, message: "This is not a cash payment" });
         }
 
+        // Check Agency Ownership
+        if (req.user.role === 'admin') {
+            const agencyId = req.user.agency;
+            const vehicleAgency = payment.reservation?.vehicle?.agency?.toString();
+
+            if (!agencyId || vehicleAgency !== agencyId) {
+                return res.status(403).json({ success: false, message: "Not authorized to confirm this payment" });
+            }
+        }
+
         // Update payment status
         payment.status = "completed";
         payment.paidAt = new Date();
         await payment.save();
 
         // Update reservation status
-        await Reservation.findByIdAndUpdate(payment.reservation, { status: "accepted" });
+        await Reservation.findByIdAndUpdate(payment.reservation._id, { status: "accepted" });
 
         res.json({ success: true, message: "Cash payment confirmed", payment });
     } catch (error) {
@@ -337,13 +351,33 @@ exports.getUserPayments = async (req, res) => {
 exports.getAllPayments = async (req, res) => {
     try {
         const { status, method } = req.query;
+        const { role, agency } = req.user;
         let query = {};
 
         if (status) query.status = status;
         if (method) query.method = method;
 
+        // Agency Isolation
+        if (role === 'admin' && agency) {
+            const Vehicle = require("../models/Vehicle"); // Lazy load to avoid circular deps if any
+
+            // 1. Find vehicles for this agency
+            const vehicles = await Vehicle.find({ agency: agency }).select('_id');
+            const vehicleIds = vehicles.map(v => v._id);
+
+            // 2. Find reservations for these vehicles
+            const reservations = await Reservation.find({ vehicle: { $in: vehicleIds } }).select('_id');
+            const reservationIds = reservations.map(r => r._id);
+
+            // 3. Filter payments by these reservations
+            query.reservation = { $in: reservationIds };
+        }
+
         const payments = await Payment.find(query)
-            .populate("reservation")
+            .populate({
+                path: 'reservation',
+                populate: { path: 'vehicle' }
+            })
             .populate("user", "name email")
             .sort({ createdAt: -1 });
 

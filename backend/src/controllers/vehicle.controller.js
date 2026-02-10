@@ -1,12 +1,19 @@
 const Vehicle = require("../models/Vehicle");
+const Reservation = require("../models/Reservation");
 
 // Add a new vehicle
 exports.addVehicle = async (req, res) => {
     try {
-        const { type, brand, model, price_per_day, agency, image, description } = req.body;
+        const { type, brand, model, price_per_day, agency, image, description, specs } = req.body;
+
+        // Force agency ID if not super admin
+        let agencyId = agency;
+        if (req.user.role === 'admin' || req.user.role === 'admin_agency') {
+            agencyId = req.user.agency;
+        }
 
         // Validate required fields
-        if (!type || !brand || !model || !price_per_day || !agency) {
+        if (!type || !brand || !model || !price_per_day) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -15,9 +22,10 @@ exports.addVehicle = async (req, res) => {
             brand,
             model,
             price_per_day,
-            agency,
+            agency: agencyId,
             image,
-            description
+            description,
+            specs
         });
 
         await vehicle.save();
@@ -31,11 +39,19 @@ exports.addVehicle = async (req, res) => {
 exports.updateVehicle = async (req, res) => {
     try {
         const { id } = req.params;
-        const vehicle = await Vehicle.findByIdAndUpdate(id, req.body, { new: true });
 
+        let vehicle = await Vehicle.findById(id);
         if (!vehicle) {
             return res.status(404).json({ message: "Vehicle not found" });
         }
+
+        // Check ownership
+        const isAdminRole = req.user.role === 'admin' || req.user.role === 'admin_agency';
+        if (isAdminRole && vehicle.agency.toString() !== req.user.agency) {
+            return res.status(403).json({ message: "Not authorized to update this vehicle" });
+        }
+
+        vehicle = await Vehicle.findByIdAndUpdate(id, req.body, { new: true });
 
         res.json({ message: "Vehicle updated", vehicle });
     } catch (error) {
@@ -47,11 +63,19 @@ exports.updateVehicle = async (req, res) => {
 exports.deleteVehicle = async (req, res) => {
     try {
         const { id } = req.params;
-        const vehicle = await Vehicle.findByIdAndDelete(id);
 
+        const vehicle = await Vehicle.findById(id);
         if (!vehicle) {
             return res.status(404).json({ message: "Vehicle not found" });
         }
+
+        // Check ownership
+        const isAdminRole = req.user.role === 'admin' || req.user.role === 'admin_agency';
+        if (isAdminRole && vehicle.agency.toString() !== req.user.agency) {
+            return res.status(403).json({ message: "Not authorized to delete this vehicle" });
+        }
+
+        await Vehicle.findByIdAndDelete(id);
 
         res.json({ message: "Vehicle deleted" });
     } catch (error) {
@@ -62,36 +86,42 @@ exports.deleteVehicle = async (req, res) => {
 // List vehicles with filters
 exports.getVehicles = async (req, res) => {
     try {
-        const { city, type, minPrice, maxPrice } = req.query;
-        let query = { availability: true };
+        const { city, type, minPrice, maxPrice, availability, search, agency } = req.query;
+        let query = {};
 
-        if (type) {
+        if (agency) {
+            query.agency = agency;
+        }
+
+        // Only enforce availability if explicitly requested or true by default if you want
+        // But frontend Logic might want to show unavailable ones slightly differently.
+        if (availability === 'true') {
+            query.availability = true;
+        }
+
+        if (type && type !== 'all') {
             query.type = type;
         }
+
         if (minPrice || maxPrice) {
             query.price_per_day = {};
             if (minPrice) query.price_per_day.$gte = Number(minPrice);
             if (maxPrice) query.price_per_day.$lte = Number(maxPrice);
         }
 
-        // Note: City filtering requires populating agency or finding agencies first.
-        // For simplicity, if city is provided, we first find agencies in that city.
-        if (city) {
-            // Assuming Agency model is available and imported, strictly speaking we need to import it.
-            // But let's assume we can filter after populate or use aggregate.
-            // Let's use a simple Populate match if possible, or 2 steps.
-            // 2-step approach is easier without deep knowledge of Agency model exports in this file.
-            // However, we want to be efficient.
-            // Let's defer city filtering or try to use populate with match.
+        if (search) {
+            query.$or = [
+                { brand: { $regex: search, $options: 'i' } },
+                { model: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
         }
 
         let vehicles = await Vehicle.find(query).populate({
             path: 'agency',
-            match: city ? { city: city } : {}
+            match: city ? { city: { $regex: city, $options: 'i' } } : {}
         });
 
-        // If city filter was applied in populate, agency will be null for non-matching cities.
-        // So we filter out vehicles where agency is null.
         if (city) {
             vehicles = vehicles.filter(v => v.agency !== null);
         }
@@ -109,7 +139,26 @@ exports.getVehicleById = async (req, res) => {
         if (!vehicle) {
             return res.status(404).json({ message: "Vehicle not found" });
         }
-        res.json(vehicle);
+
+        // Get unavailable dates based on reservations
+        const reservations = await Reservation.find({
+            vehicle: req.params.id,
+            status: { $in: ["pending", "accepted"] },
+            endDate: { $gte: new Date() } // Only future or current reservations
+        });
+
+        const unavailableDates = [];
+        reservations.forEach(res => {
+            let current = new Date(res.startDate);
+            const end = new Date(res.endDate);
+            // Iterate from start to end
+            while (current <= end) {
+                unavailableDates.push(new Date(current));
+                current.setDate(current.getDate() + 1);
+            }
+        });
+
+        res.json({ ...vehicle.toObject(), unavailableDates });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }

@@ -1,9 +1,12 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const agencySchema = new mongoose.Schema({
   name: String,
-  city: String,
-  phone: String
-});
+  location: String,
+  status: {
+    type: String,
+    default: "active"
+  }
+}, { timestamps: true });
 
-export default mongoose.model("Agency", agencySchema);
+module.exports = mongoose.model("Agency", agencySchema);
