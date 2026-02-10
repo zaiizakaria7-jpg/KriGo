@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
-export const isAuth = (req, res, next) => {
+module.exports.isAuth = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header) return res.sendStatus(401);
 
@@ -8,9 +8,10 @@ export const isAuth = (req, res, next) => {
   if (!token) return res.sendStatus(401);
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
     next();
-  } catch {
+  } catch (err) {
     res.sendStatus(403);
   }
 };

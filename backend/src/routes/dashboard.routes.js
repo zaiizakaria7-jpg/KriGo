@@ -6,5 +6,6 @@ const { isAgency } = require("../middlewares/role.middleware");
 
 // Admin only stats
 router.get("/stats", isAuth, isAgency, controller.getStats);
+router.get("/activity", isAuth, isAgency, controller.getActivity);
 
 module.exports = router;
