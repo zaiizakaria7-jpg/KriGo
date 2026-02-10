@@ -79,9 +79,7 @@ export default function Register() {
                 </div>
 
                 <div className="relative z-10 flex h-full w-full flex-col p-12">
-                    <Link to="/" className="flex items-center gap-2 group transition-all">
-                        <img src="/logo.PNG" className="h-10 w-auto object-contain transition-transform group-hover:scale-105" alt="KriGo" />
-                    </Link>
+
 
                     <div className="mt-auto max-w-lg">
                         <div className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 backdrop-blur-md mb-6">
@@ -119,9 +117,7 @@ export default function Register() {
             <div className="flex w-full flex-col items-center justify-center p-6 lg:w-1/2 xl:w-2/5 animate-in fade-in duration-700">
                 <div className="w-full max-w-sm">
                     {/* Mobile Branding */}
-                    <div className="mb-8 flex flex-col items-center lg:hidden">
-                        <img src="/logo.PNG" className="h-12 w-auto object-contain mb-4" alt="KriGo" />
-                    </div>
+
 
                     <div className="flex flex-col gap-2 mb-8">
                         <h2 className="text-3xl font-bold tracking-tight text-foreground font-heading">Create Account</h2>
