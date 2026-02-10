@@ -2,6 +2,7 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
+const { generateToken } = require('../utils/jwt');
 
 // Change Password
 exports.changePassword = async (req, res) => {
@@ -164,12 +165,7 @@ exports.verifyLogin2FA = async (req, res) => {
 
         if (verified) {
             // Generate JWT since auth is successful
-            const jwt = require("jsonwebtoken");
-            const newToken = jwt.sign(
-                { id: user._id, role: user.role, agency: user.agency },
-                process.env.JWT_SECRET,
-                { expiresIn: "1d" }
-            );
+            const newToken = generateToken(user);
 
             res.json({
                 success: true,

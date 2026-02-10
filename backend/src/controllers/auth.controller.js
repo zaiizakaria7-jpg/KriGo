@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const jwt = require("jsonwebtoken");
+const { generateToken } = require("../utils/jwt");
 const bcrypt = require("bcryptjs");
 
 // Register User
@@ -29,11 +29,7 @@ exports.register = async (req, res) => {
       password: hashedPassword
     });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateToken(user);
 
     res.status(201).json({
       message: "Compte créé avec succès",
@@ -91,11 +87,7 @@ exports.login = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, agency: user.agency },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateToken(user);
 
     res.json({
       token,

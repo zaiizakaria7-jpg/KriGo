@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const { verifyToken } = require("../utils/jwt");
 
 module.exports.isAuth = (req, res, next) => {
   const header = req.headers.authorization;
@@ -8,7 +8,7 @@ module.exports.isAuth = (req, res, next) => {
   if (!token) return res.sendStatus(401);
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
     req.user = decoded;
     next();
   } catch (err) {

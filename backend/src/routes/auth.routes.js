@@ -1,6 +1,6 @@
 const express = require("express");
 const passport = require("passport");
-const jwt = require("jsonwebtoken");
+const { generateToken } = require("../utils/jwt");
 const { login, register } = require("../controllers/auth.controller.js");
 
 const router = express.Router();
@@ -36,16 +36,7 @@ router.get(
             req.user = user;
 
             console.log("✅ User authenticated:", req.user.email, "Role:", req.user.role);
-            const token = jwt.sign(
-                {
-                    id: req.user._id,
-                    role: req.user.role,
-                    email: req.user.email,
-                    nom: req.user.nom,
-                    prenom: req.user.prenom
-                },
-                process.env.JWT_SECRET
-            );
+            const token = generateToken(req.user);
             // Redirect to frontend with token
             res.redirect(`${CLIENT_URL}/auth/callback?token=${token}`);
         })(req, res, next);
@@ -73,16 +64,7 @@ router.get(
             req.user = user;
 
             console.log("✅ User authenticated via Facebook:", req.user.email, "Role:", req.user.role);
-            const token = jwt.sign(
-                {
-                    id: req.user._id,
-                    role: req.user.role,
-                    email: req.user.email,
-                    nom: req.user.nom,
-                    prenom: req.user.prenom
-                },
-                process.env.JWT_SECRET
-            );
+            const token = generateToken(req.user);
             res.redirect(`${CLIENT_URL}/auth/callback?token=${token}`);
         })(req, res, next);
     }
